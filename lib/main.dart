@@ -30,14 +30,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-class AttachBloc extends StatelessWidget {
-  const AttachBloc({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-        create: ((context) =>
-            HomeBloc(RepositoryProvider.of<GetPersonService>(context))));
-  }
-}
