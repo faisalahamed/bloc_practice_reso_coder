@@ -1,7 +1,19 @@
+import 'package:bloc_learing/constant/theme.dart';
+import 'package:bloc_learing/theme_bloc/theme_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final stroage = await HydratedStorage.build(
+      storageDirectory: await getApplicationDocumentsDirectory());
+
+  HydratedBlocOverrides.runZoned(
+    () => runApp(const MyApp()),
+    storage: stroage,
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -9,74 +21,73 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => ThemeBloc(),
+        )
+      ],
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, state) {
+          return MaterialApp(
+            title: 'Flutter Demo',
+            theme: state.themeMode
+                ? AppThemes.appThemeData[AppTheme.darkTheme]
+                : AppThemes.appThemeData[AppTheme.lightTheme],
+            home: const MyHomePage(),
+          );
+        },
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  void _decrementCounter() {
-    setState(() {
-      _counter--;
-    });
-  }
+class MyHomePage extends StatelessWidget {
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+        // title: Text('theme'),
+        actions: [
+          Container(
+            width: 60,
+            child: BlocBuilder<ThemeBloc, ThemeState>(
+              builder: (context, state) {
+                return Switch(
+                    value: state.themeMode,
+                    onChanged: (c) {
+                      c
+                          ? context.read<ThemeBloc>().add(ThemeLightEvent())
+                          : context.read<ThemeBloc>().add(ThemeDarkEvent());
+                    });
+              },
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: _decrementCounter,
-            tooltip: 'Increment',
-            child: const Icon(Icons.remove),
-          ),
-          FloatingActionButton(
-            onPressed: _incrementCounter,
-            tooltip: 'Increment',
-            child: const Icon(Icons.add),
           ),
         ],
+      ),
+      body: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, state) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  'Theme Mode: ${state.themeMode.toString()}',
+                  style: Theme.of(context).textTheme.headline4,
+                ),
+                Switch(
+                    value: state.themeMode,
+                    onChanged: (v) {
+                      v
+                          ? context.read<ThemeBloc>().add(ThemeLightEvent())
+                          : context.read<ThemeBloc>().add(ThemeDarkEvent());
+                    })
+              ],
+            ),
+          );
+        },
       ),
     );
   }
