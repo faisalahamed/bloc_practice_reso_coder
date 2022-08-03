@@ -1,6 +1,9 @@
+import 'package:bloc_learing/bloc/counter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -14,40 +17,22 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: BlocProvider(
+        create: (context) => CounterBloc(),
+        child: const MyHomePage(),
+      ),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  void _decrementCounter() {
-    setState(() {
-      _counter--;
-    });
-  }
+class MyHomePage extends StatelessWidget {
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: const Text('bloc'),
       ),
       body: Center(
         child: Column(
@@ -56,10 +41,67 @@ class _MyHomePageState extends State<MyHomePage> {
             const Text(
               'You have pushed the button this many times:',
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            // ! Single Bloc Builder
+            BlocBuilder<CounterBloc, CounterState>(
+              builder: (context, state) {
+                return Text(
+                  state.counterValue.toString(),
+                  style: Theme.of(context).textTheme.headline4,
+                );
+              },
             ),
+            Expanded(
+              // !Bloc listener listen to the state changes
+              child: BlocListener<CounterBloc, CounterState>(
+                // *Listener 1
+                listener: (context, state) {
+                  if (state is CounterIncrementState) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Counter Incremented'),
+                        duration: Duration(milliseconds: 300),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Counter Decremented'),
+                        duration: Duration(milliseconds: 300),
+                      ),
+                    );
+                  }
+                },
+                child: const SizedBox(),
+              ),
+            ),
+            // !Bloc Consumer Provide both listener and Builder
+            Expanded(
+                child: BlocConsumer<CounterBloc, CounterState>(
+              // *Listener 2
+              listener: (context, state) {
+                if (state is CounterIncrementState) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Counter Incremented'),
+                      duration: Duration(milliseconds: 300),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Counter Decremented'),
+                      duration: Duration(milliseconds: 300),
+                    ),
+                  );
+                }
+              },
+              builder: (context, state) {
+                return Text(
+                  state.counterValue.toString(),
+                  style: Theme.of(context).textTheme.headline4,
+                );
+              },
+            )),
           ],
         ),
       ),
@@ -67,12 +109,16 @@ class _MyHomePageState extends State<MyHomePage> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
-            onPressed: _decrementCounter,
+            onPressed: () {
+              context.read<CounterBloc>().add(CounterDecrementEvent());
+            },
             tooltip: 'Increment',
             child: const Icon(Icons.remove),
           ),
           FloatingActionButton(
-            onPressed: _incrementCounter,
+            onPressed: () {
+              context.read<CounterBloc>().add(CounterIncrementEvent());
+            },
             tooltip: 'Increment',
             child: const Icon(Icons.add),
           ),
