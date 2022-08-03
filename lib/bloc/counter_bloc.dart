@@ -8,10 +8,12 @@ part 'counter_state.dart';
 class CounterBloc extends HydratedBloc<CounterEvent, CounterState> {
   CounterBloc() : super(const CounterInitial()) {
     on<CounterIncrementEvent>((event, emit) {
-      emit(CounterIncrementState(countervalue: state.counterValue + 1));
+      emit(CounterIncrementState(
+          countervalue: state.counterValue + event.count));
     });
     on<CounterDecrementEvent>((event, emit) {
-      emit(CounterDecrementState(countervalue: state.counterValue - 1));
+      emit(CounterDecrementState(
+          countervalue: state.counterValue - event.count));
     });
   }
 
